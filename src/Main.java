@@ -11,22 +11,29 @@ import java.util.*;
 public class Main {
     public static void main(String[] args) {
         TaskManagerImpl taskManager = TaskManagerImpl.getInstance(); // Utilisation du Singleton
+        Scanner scanner = new Scanner(System.in);
 
 
+         List<Task> tasks = new ArrayList<>();
+         List<Project> projects = new ArrayList<>();
 
-        // Création de trois étudiants et deux professeurs
-        Student student1 = new Student("Yassine", "etudiant1@example.com", "Licence");
-        Student student2 = new Student("Ahmed", "etudiant2@example.com", "Licence");
-        Student student3 = new Student("Souhaiel", "etudiant3@example.com", "MPGL");
 
-        Professor professor1 = new Professor("Asma", "professeur1@example.com", "Master");
-        Professor professor2 = new Professor("Ahlem", "professeur2@example.com", "Master");
+        List<Student> students = Arrays.asList(
+                new Student("Yassine", "etudiant1@example.com", "Licence"),
+                new Student("Iheb", "etudiant2@example.com", "Licence"),
+                new Student("Issa", "etudiant2@example.com", "MPGL"),
+                new Student("Souhaiel", "etudiant3@example.com", "MPGL")
+        );
 
-         taskManager.addObserver(professor1); // Ajout du professeur1 comme observateur
-         taskManager.addObserver(professor2); // Ajout du professor2 comme observateur
+        List<Professor> professors = Arrays.asList(
+                new Professor("Asma", "professeur1@example.com", "Professeur"),
+                new Professor("Ahlem", "professeur2@example.com", "Professeur")
+        );
+
+       // taskManager.addObserver((Observer) professors); // Ajout du professeur1 comme observateur
+
 
         boolean quit = false;
-        Scanner scanner = new Scanner(System.in);
 
         while (!quit) {
             System.out.println("\nChoisissez un rôle :");
@@ -38,10 +45,10 @@ public class Main {
 
             switch (roleChoice) {
                 case 1:
-                    professorMenu(taskManager, professor1, scanner);
+                    professorMenu(taskManager, professors,students,tasks, projects, scanner);
                     break;
                 case 2:
-                    studentMenu(taskManager, student1, scanner);
+                    studentMenu(taskManager, professors,students,tasks, projects, scanner);
                     break;
                 case 3:
                     quit = true;
@@ -53,7 +60,7 @@ public class Main {
         }
     }
 
-    private static void professorMenu(TaskManager taskManager, Professor professor, Scanner scanner) {
+    private static void professorMenu(TaskManager taskManager, List<Professor> professor,List<Student>  students ,List<Task> tasks, List<Project> projects,Scanner scanner) {
         boolean quit = false;
 
         while (!quit) {
@@ -69,16 +76,17 @@ public class Main {
 
             switch (choice) {
                 case 1:
-                    createProjectAndTask(taskManager, scanner);
+                    createProjectAndTask(taskManager,tasks,students,projects, scanner);
                     break;
                 case 2:
-                    addTasksToExistingProject(taskManager, scanner);
+                    addTasksToExistingProject(taskManager,tasks,students,projects, scanner);
                     break;
                 case 3:
-                    assignStudentsToTask(taskManager, scanner);
+                    assignStudentsToTask(taskManager,tasks,students, projects,scanner);
                     break;
                 case 4:
-                    taskManager.displayTasks();
+                    displayAllTasks(tasks);
+
                     break;
                 case 5:
                     taskManager.displayAllProjects();
@@ -93,7 +101,7 @@ public class Main {
         }
     }
 
-    private static void studentMenu(TaskManager taskManager, Student student, Scanner scanner) {
+    private static void studentMenu(TaskManager taskManager, List<Professor> professor,List<Student>  students ,List<Task> tasks, List<Project> projects, Scanner scanner) {
         boolean quit = false;
 
         while (!quit) {
@@ -110,10 +118,11 @@ public class Main {
                     taskManager.displayAllStudents();
                     break;
                 case 2:
-                    modifyTaskProgress(taskManager, student, scanner);
+
+                    modifyTaskProgress(taskManager, students, scanner);
                     break;
                 case 3:
-                    addAnotherStudentToTask(taskManager, student, scanner);
+                    addAnotherStudentToTask(taskManager, students, scanner);
                     break;
                 case 4:
                     quit = true;
@@ -127,20 +136,193 @@ public class Main {
 
 
 
-    private static void addTasksToExistingProject(TaskManager taskManager, Scanner scanner) {
-        System.out.println("Entrez le nom du projet existant :");
-        String projectName = scanner.nextLine();
 
-        Project project = taskManager.findProjectByName(projectName);
+    private static void displayAllTasks(List<Task> tasks) {
+        System.out.println("\nListe de toutes les tâches :");
+        for (Task task : tasks) {
+            System.out.println(task.getTaskName());
+        }
+    }
+
+
+
+
+    private static void addTasksToExistingProject(TaskManager taskManager,List<Task> tasks,List<Student> studentss,List<Project> projects,  Scanner scanner) {
+        System.out.println("Entrez le nom du projet existant :");
+        String projectName = scanner.next();
+        Project project = null;
+        for (Project pr : projects){
+            if (pr.getProjectName().equals(projectName)){
+                 project = pr;
+            }
+        }
 
         if (project != null) {
             // Ajout de tâches au projet existant
             System.out.println("Entrez le nombre de tâches à ajouter :");
             int numberOfTasks = scanner.nextInt();
-            scanner.nextLine(); // Consommer le caractère de nouvelle ligne
 
             for (int i = 0; i < numberOfTasks; i++) {
-                addTaskToProject(taskManager, project, scanner);
+                System.out.println("Entrez le nom de tâches à ajouter :");
+                String taskNameName = scanner.next();
+                Task task = new Task(taskNameName, null, new Date(), new Date()) {
+                    @Override
+                    public void performTask() {
+                        System.out.println("Effectuer une tâche : " + getTaskName());
+                        setTaskStatus(TaskStates.IN_PROGRESS);
+                    }
+                };
+
+
+                // Ajouter la tâche à la liste de tâches spécifiée
+                tasks.add(task);
+
+                // Ajouter la tâche au projet spécifié
+                taskManager.addTaskToProject(task, project);
+                System.out.println("Tâche"+taskNameName+ "ajoutée au projet"+projectName+ "avec succès.");
+           //     addTaskToProject(taskManager, tasks,project,studentss, scanner);
+            }
+
+
+        } else {
+            System.out.println("Projet non trouvé.");
+        }
+    }
+
+
+
+    private static void createProjectAndTask(TaskManager taskManager,List<Task> tasks , List<Student> studentss,List<Project> projects, Scanner scanner) {
+
+        String choice = getProjectChoice(scanner);
+        System.out.println("Projet choice name ****" + choice);
+        Project project = new Project(choice);
+
+
+        //description du projet
+        System.out.println("Entrez la description du projet :");
+        String projectDescription = scanner.next();
+        project.setDescription(projectDescription);
+
+        taskManager.addProject(project);
+        projects.add(project);
+
+        System.out.println("Projet créé avec succès.");
+        addTaskToProject(taskManager,tasks, project,studentss, scanner);
+
+    }
+
+    private static void addTaskToProject(TaskManager taskManager,List<Task>  taskss, Project project,List<Student> studentss, Scanner scanner) {
+
+
+        System.out.println("Entrez le nom de la tâche :");
+        String taskName = scanner.next();
+        System.out.println("Nom de la tâche : " + taskName);
+
+        // Assignez des étudiants à la tâche
+        List<Student> assignedStudents = assignStudentsFromList(studentss, scanner);
+
+
+        // Créer une tâche avec le nom spécifié
+        Task task = new Task(taskName, assignedStudents, new Date(), new Date()) {
+            @Override
+            public void performTask() {
+                System.out.println("Effectuer une tâche : " + getTaskName());
+                setTaskStatus(TaskStates.IN_PROGRESS);
+            }
+        };
+
+
+        // Ajouter la tâche à la liste de tâches spécifiée
+        taskss.add(task);
+
+        // Ajouter la tâche au projet spécifié
+        taskManager.addTaskToProject(task, project);
+        System.out.println("Tâche ajoutée au projet avec succès.");
+
+
+
+    }
+
+
+    private static List<Student> assignStudentsFromList(List<Student> studentList, Scanner scanner) {
+        List<Student> assignedStudents = new ArrayList<>();
+
+        System.out.println("Entrez le nombre d'étudiants à assigner :");
+        int numberOfStudents = scanner.nextInt();
+     //   scanner.nextLine(); // Consommer le caractère de nouvelle ligne1
+        Boolean trouve = false;
+
+        for (int i = 0; i < numberOfStudents; i++) {
+            System.out.println("Entrez le nom de l'étudiant " + (i + 1) + " :");
+            String studentName = scanner.next();
+            // Vous devrez trouver l'étudiant correspondant dans votre liste existante
+            // et ajouter cet étudiant à la liste des étudiants assignés.
+            /** SOLUTION TEST **/
+            for (Student st : studentList) {
+                if (st.getName().equals(studentName));
+                assignedStudents.add(st);
+                trouve = true;
+            }
+            if (!trouve){
+                System.out.println("Étudiant non trouvé dans la liste.");
+
+            }
+            /** END SOLUTION TEST **/
+
+
+        }
+
+        return assignedStudents;
+    }
+
+
+
+
+
+
+
+
+    private static void assignStudentsToTask(TaskManager taskManager, List<Task> taskss, List<Student> students, List<Project> projects, Scanner scanner) {
+        System.out.println("Voici la liste des projets déjà créés : " +projects);
+
+        // Affichez la liste des projets déjà créés
+        System.out.println("Voici la liste des projets déjà créés :");
+        taskManager.displayAllProjects();
+
+        // Obtenez le nom du projet choisi par l'utilisateur
+        System.out.println("Choisissez un projet existant :");
+        String projectName = scanner.next();
+
+        // Recherche du projet dans la liste existante
+        Project project = projects.stream()
+                .filter(p -> p.getProjectName().contains(projectName))
+                .findFirst()
+                .orElse(null);
+
+        System.out.println("optionalProject  " +project);
+        if (project != null) {
+
+            // Affichez la liste des tâches dans le projet choisi
+            System.out.println("Choisissez une tâche existante dans le projet '" + projectName + "' :");
+            displayAllTasks(project.getTasks());
+
+            // Obtenez le nom de la tâche choisie par l'utilisateur
+            String taskName = scanner.nextLine();
+
+            // Recherche de la tâche dans la liste existante du projet
+            Optional<Task> optionalTask = project.getTasks().stream()
+                    .filter(task -> task.getTaskName().equalsIgnoreCase(taskName))  // Utiliser equalsIgnoreCase pour ignorer la casse
+                    .findFirst();
+
+            if (optionalTask.isPresent()) {
+                Task task = optionalTask.get();
+                // Assignez des étudiants à la tâche
+                List<Student> assignedStudents = assignStudentsFromList(students, scanner);
+
+                task.setAssignedStudents(assignedStudents);
+                System.out.println("Étudiants assignés à la tâche avec succès.");
+            } else {
+                System.out.println("Tâche non trouvée dans le projet '" + projectName + "'.");
             }
         } else {
             System.out.println("Projet non trouvé.");
@@ -149,74 +331,17 @@ public class Main {
 
 
 
-    private static void createProjectAndTask(TaskManager taskManager, Scanner scanner) {
-        System.out.println("Entrez le nom du projet : ");
-        String projectName = scanner.nextLine();
 
-        // Créer un projet avec le nom spécifié
-        Project project = new Project(projectName);
-        taskManager.addProject(project);
-
-        System.out.println("Projet créé avec succès.");
-
-        // Ajouter une tâche à ce projet
-        addTaskToProject(taskManager, project, scanner);
-    }
-
-    private static void addTaskToProject(TaskManager taskManager, Project project, Scanner scanner) {
-
-
-
-        System.out.println("Entrez le nom de la tâche :");
-        String taskName = scanner.nextLine();
-
-        // Créer une tâche avec le nom spécifié
-        Task task = new Task(taskName, Collections.emptyList(), new Date(), new Date()) {
-            @Override
-            public void performTask() {
-                System.out.println("Effectuer une tâche : " + getTaskName());
-                setTaskStatus(TaskStates.IN_PROGRESS);
-            }
-        };
-
-        // Ajouter la tâche au projet spécifié
-        taskManager.addTaskToProject(task, project);
-        System.out.println("Tâche ajoutée au projet avec succès.");
-    }
-
-
-
-    private static void assignStudentsToTask(TaskManager taskManager, Scanner scanner) {
-        System.out.println("Entrez le nom de la tâche à laquelle assigner des étudiants :");
-        String taskName = scanner.nextLine();
-
-        Task task = taskManager.getTasks().stream()
-                .filter(t -> t.getTaskName().equals(taskName))
-                .findFirst()
-                .orElse(null);
-
-        if (task != null) {
-            System.out.println("Entrez le nombre d'étudiants à assigner :");
-            int numberOfStudents = scanner.nextInt();
-            scanner.nextLine(); // Consommer le caractère de nouvelle ligne
-
-            List<Student> assignedStudents = new ArrayList<>();
-
-            for (int i = 0; i < numberOfStudents; i++) {
-                System.out.println("Entrez le nom de l'étudiant " + (i + 1) + " :");
-                String studentName = scanner.nextLine();
-                Student student = new Student(studentName, "", ""); // Création d'un étudiant temporaire
-                assignedStudents.add(student);
-            }
-
-            task.setAssignedStudents(assignedStudents);
-            System.out.println("Étudiants assignés à la tâche avec succès.");
-        } else {
-            System.out.println("Tâche non trouvée.");
+    private static void displayAllProjects(List<Project> projects) {
+        System.out.println("Liste des projets :");
+        for (Project project : projects) {
+            System.out.println("- " + project.getProjectName());
         }
     }
 
-    private static void modifyTaskProgress(TaskManager taskManager, Student student, Scanner scanner) {
+
+
+    private static void modifyTaskProgress(TaskManager taskManager, List<Student> student, Scanner scanner) {
         System.out.println("Entrez le nom de la tâche pour laquelle vous souhaitez modifier l'avancement :");
         String taskName = scanner.nextLine();
 
@@ -237,7 +362,7 @@ public class Main {
         }
     }
 
-    private static void addAnotherStudentToTask(TaskManager taskManager, Student student, Scanner scanner) {
+    private static void addAnotherStudentToTask(TaskManager taskManager, List<Student> student, Scanner scanner) {
         System.out.println("Entrez le nom de la tâche à laquelle ajouter un autre étudiant :");
         String taskName = scanner.nextLine();
 
@@ -246,23 +371,36 @@ public class Main {
                 .findFirst()
                 .orElse(null);
 
-        if (task != null && task.getAssignedStudents().contains(student)) {
+        if (task != null && !student.isEmpty()) {
             System.out.println("Entrez le nom de l'étudiant à ajouter à la tâche :");
             String newStudentName = scanner.nextLine();
-            Student newStudent = new Student(newStudentName, "", ""); // Création d'un nouvel étudiant temporaire
 
-            List<Student> assignedStudents = task.getAssignedStudents();
-            assignedStudents.add(newStudent);
-            task.setAssignedStudents(Collections.singletonList((Student) assignedStudents));
+            // Recherche de l'étudiant dans la liste existante
+            Student newStudent = student.stream()
+                    .filter(Student -> Student.getName().equals(newStudentName))
+                    .findFirst()
+                    .orElse(null);
 
-            System.out.println("Étudiant ajouté à la tâche avec succès.");
+            if (newStudent != null) {
+                List<Student> assignedStudents = new ArrayList<>(task.getAssignedStudents());
+                assignedStudents.add(newStudent);
+                task.setAssignedStudents(assignedStudents);
+
+                System.out.println("Étudiant ajouté à la tâche avec succès.");
+            } else {
+                System.out.println("Étudiant non trouvé dans la liste.");
+            }
         } else {
-            System.out.println("Tâche non trouvée ou vous n'êtes pas assigné à cette tâche.");
+            System.out.println("Tâche non trouvée ou liste d'étudiants vide.");
         }
     }
 
     private static int getUserChoice(Scanner scanner) {
         System.out.print("Votre choix : ");
         return scanner.nextInt();
+    }
+    private static String getProjectChoice(Scanner scanner) {
+        System.out.print("Saisie Nouvelle Projet : ");
+        return scanner.next();
     }
 }

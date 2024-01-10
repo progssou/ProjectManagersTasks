@@ -8,7 +8,8 @@ import java.util.*;
 public class TaskManagerImpl extends Observable implements TaskManager    {
     private List<Task> tasks;
     private List<Project> projects;
-    private List<Observable> observers;
+    private List<Observer> observers ;
+
 
     private static TaskManagerImpl instance;
 
@@ -34,11 +35,12 @@ public class TaskManagerImpl extends Observable implements TaskManager    {
     }
 
 
-    public void displayAllProjects() {
+    public List<Project> displayAllProjects() {
         System.out.println("Liste de tous les projets :");
         for (Project project : projects) {
             System.out.println("- " + project.getProjectName());
         }
+        return null;
     }
 
 
@@ -167,7 +169,21 @@ public class TaskManagerImpl extends Observable implements TaskManager    {
     }
 
     @Override
+    public void removeObserver(Observer observer) {
+        observers.remove(observer);
+    }
+
+    @Override
+    public void notifyObservers() {
+        for (Observer observer : observers) {
+            observer.update(this, observer);
+        }
+    }
+
+    @Override
     public void update(Observable o, Object arg) {
+        // Logique pour réagir aux changements dans les tâches
+        System.out.println("Changement dans les tâches. Mettez à jour les informations du professeur.");
 
     }
 

@@ -4,7 +4,6 @@ import managertasks.model.*;
 import managertasks.projets.*;
 
 import java.util.List;
-import java.util.Observable;
 import java.util.Observer;
 
 public interface TaskManager extends  Observer{
@@ -33,9 +32,9 @@ public interface TaskManager extends  Observer{
 
     void displayAllStudents();
 
-    void displayAllProjects();
+    List<Project> displayAllProjects();
 
 
-    @Override
-    void update(Observable o, Object arg);
+    void removeObserver(Observer observer);
+
 }
