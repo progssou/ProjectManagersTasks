@@ -38,7 +38,7 @@ public abstract class Task {
         this.description = description; // Initialisation de la nouvelle propriété
     }
 
-    public Task(String taskName, List<Student> assignedStudents, Date startDate, Date deadline) {
+    public Task(String taskName, List<Student> assignedStudents, Date startDate, Date deadline,Project project) {
         this.taskName = taskName;
         this.taskStatus = TaskStates.IN_PROGRESS;
         this.isCompleted = false;
@@ -48,6 +48,8 @@ public abstract class Task {
         this.comments = new ArrayList<>();
         this.checklists = new ArrayList<>();
         this.labels = new ArrayList<>();
+        this.project = project;
+
     }
 
     public void addObserver(TaskManager observer) {

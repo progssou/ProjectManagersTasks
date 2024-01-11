@@ -7,6 +7,7 @@ import managertasks.projets.Project;
 import managertasks.task.TaskStates;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Main {
     public static void main(String[] args) {
@@ -48,7 +49,7 @@ public class Main {
                     professorMenu(taskManager, professors,students,tasks, projects, scanner);
                     break;
                 case 2:
-                    studentMenu(taskManager, professors,students,tasks, projects, scanner);
+                    studentMenu(taskManager, students,tasks, projects, scanner);
                     break;
                 case 3:
                     quit = true;
@@ -85,8 +86,8 @@ public class Main {
                     assignStudentsToTask(taskManager,tasks,students, projects,scanner);
                     break;
                 case 4:
-                    displayAllTasks(tasks);
-
+                   // displayAllTasks(tasks);
+                    getStudentsSelectedProjectAndTask(taskManager,tasks,students, projects,scanner);
                     break;
                 case 5:
                     taskManager.displayAllProjects();
@@ -101,7 +102,7 @@ public class Main {
         }
     }
 
-    private static void studentMenu(TaskManager taskManager, List<Professor> professor,List<Student>  students ,List<Task> tasks, List<Project> projects, Scanner scanner) {
+    private static void studentMenu(TaskManager taskManager,List<Student>  students ,List<Task> tasks, List<Project> projects, Scanner scanner) {
         boolean quit = false;
 
         while (!quit) {
@@ -115,11 +116,11 @@ public class Main {
 
             switch (choice) {
                 case 1:
-                    taskManager.displayAllStudents();
+                    displayAllTasks(tasks);
+                    taskManager.displayAllProjects();
                     break;
                 case 2:
-
-                    modifyTaskProgress(taskManager, students, scanner);
+                    modifyTaskProgress(taskManager, students,tasks, scanner);
                     break;
                 case 3:
                     addAnotherStudentToTask(taskManager, students, scanner);
@@ -137,13 +138,87 @@ public class Main {
 
 
 
+
+
+
+
+
+    public static void getStudentsSelectedProjectAndTask(TaskManager taskManager, List<Task> tasks, List<Student> students, List<Project> projects, Scanner scanner) {
+         selectProjectAndTask(taskManager,projects,tasks, scanner);
+
+      //  List<Student> selectedStudents = getStudentsForTask(selectedTask, students);
+    }
+
+
+
+    public static void selectProjectAndTask(TaskManager taskManager,List<Project> projects,List<Task>  tasks, Scanner scanner) {
+        System.out.println("Voici la liste des projets déjà créés :");
+        taskManager.displayAllProjects();
+        // Obtenez le nom du projet choisi par l'utilisateur
+        System.out.println("Choisissez un projet existant :");
+        String projectName = scanner.next();
+        Project selectedProject = null;
+        List<Task>  tasksP = null;
+        for (Project project : projects) {
+
+
+            if (project.getProjectName().equals(projectName)){
+                System.out.println("Nom: " + project.getProjectName() + ", Description: " + project.getDescription());
+                selectedProject = project;
+            }
+        }
+        if(selectedProject!=null){
+            Project finalSelectedProject = selectedProject;
+
+            tasksP = tasks.stream().filter(x-> x.getProject().getProjectName().equals(finalSelectedProject.getProjectName()) ).collect(Collectors.toList());
+            System.out.println("** Liste des tasks pour le projet  : "+finalSelectedProject.getProjectName());
+
+            for (Task task : tasksP) {
+
+                System.out.println("- Task : "+task.getTaskName());
+            }
+        }else{
+            System.out.println("Projet non existant :");
+
+        }
+
+
+    }
+
+
+    public static List<Task> getTasksForProject(Project project, List<Task> tasks) {
+        List<Task> projectTasks = new ArrayList<>();
+        for (Task task : tasks) {
+            System.out.println("project t3addaaaaa  " +project.getProjectName());
+            System.out.println("task t3addaaaaa  " +task.getTaskName());
+//            if (task.getProject().equals(project)) {
+              //  projectTasks.add(task);
+                System.out.println( project.getTasks()
+                        +" Task of project selected: " + task.getProject().getProjectName());
+
+  //          }
+        }
+        return projectTasks;
+    }
+
+
+    public static List<Student> getStudentsForTask(Task task, List<Student> students) {
+        List<Student> taskStudents = new ArrayList<>();
+        for (Student student : students) {
+            if (student.getTask().equals(task)) {
+                taskStudents.add(student);
+            }
+        }
+        return taskStudents;
+    }
+
+
     private static void displayAllTasks(List<Task> tasks) {
         System.out.println("\nListe de toutes les tâches :");
         for (Task task : tasks) {
             System.out.println(task.getTaskName());
         }
     }
-
 
 
 
@@ -165,7 +240,7 @@ public class Main {
             for (int i = 0; i < numberOfTasks; i++) {
                 System.out.println("Entrez le nom de tâches à ajouter :");
                 String taskNameName = scanner.next();
-                Task task = new Task(taskNameName, null, new Date(), new Date()) {
+                Task task = new Task(taskNameName, null, new Date(), new Date(), project) {
                     @Override
                     public void performTask() {
                         System.out.println("Effectuer une tâche : " + getTaskName());
@@ -223,11 +298,11 @@ public class Main {
 
 
         // Créer une tâche avec le nom spécifié
-        Task task = new Task(taskName, assignedStudents, new Date(), new Date()) {
+        Task task = new Task(taskName, assignedStudents, new Date(), new Date(), project) {
             @Override
             public void performTask() {
                 System.out.println("Effectuer une tâche : " + getTaskName());
-                setTaskStatus(TaskStates.IN_PROGRESS);
+                setTaskStatus(TaskStates.New);
             }
         };
 
@@ -277,13 +352,7 @@ public class Main {
 
 
 
-
-
-
-
-
-    private static void assignStudentsToTask(TaskManager taskManager, List<Task> taskss, List<Student> students, List<Project> projects, Scanner scanner) {
-        System.out.println("Voici la liste des projets déjà créés : " +projects);
+    private static void assignStudentsToTask(TaskManager taskManager, List<Task> tasks, List<Student> students, List<Project> projects, Scanner scanner) {
 
         // Affichez la liste des projets déjà créés
         System.out.println("Voici la liste des projets déjà créés :");
@@ -294,14 +363,14 @@ public class Main {
         String projectName = scanner.next();
 
         // Recherche du projet dans la liste existante
-        Project project = projects.stream()
-                .filter(p -> p.getProjectName().contains(projectName))
-                .findFirst()
-                .orElse(null);
+        Project project = null;
+        for (Project pr : projects){
+            if (pr.getProjectName().equals(projectName)){
+                project = pr;
+            }
+        }
 
-        System.out.println("optionalProject  " +project);
         if (project != null) {
-
             // Affichez la liste des tâches dans le projet choisi
             System.out.println("Choisissez une tâche existante dans le projet '" + projectName + "' :");
             displayAllTasks(project.getTasks());
@@ -309,21 +378,28 @@ public class Main {
             // Obtenez le nom de la tâche choisie par l'utilisateur
             String taskName = scanner.nextLine();
 
-            // Recherche de la tâche dans la liste existante du projet
-            Optional<Task> optionalTask = project.getTasks().stream()
-                    .filter(task -> task.getTaskName().equalsIgnoreCase(taskName))  // Utiliser equalsIgnoreCase pour ignorer la casse
-                    .findFirst();
+            // Assignez des étudiants à la tâche
+            List<Student> assignedStudents = assignStudentsFromList(students, scanner);
 
-            if (optionalTask.isPresent()) {
-                Task task = optionalTask.get();
-                // Assignez des étudiants à la tâche
-                List<Student> assignedStudents = assignStudentsFromList(students, scanner);
 
-                task.setAssignedStudents(assignedStudents);
-                System.out.println("Étudiants assignés à la tâche avec succès.");
-            } else {
-                System.out.println("Tâche non trouvée dans le projet '" + projectName + "'.");
-            }
+            // Créer une tâche avec le nom spécifié
+            Task task = new Task(taskName, assignedStudents, new Date(), new Date(), project) {
+                @Override
+                public void performTask() {
+                    System.out.println("Effectuer une tâche : " + getTaskName());
+                    setTaskStatus(TaskStates.New);
+                }
+            };
+
+
+            // Ajouter la tâche à la liste de tâches spécifiée
+            tasks.add(task);
+
+            // Ajouter la tâche au projet spécifié
+            taskManager.addTaskToProject(task, project);
+
+
+
         } else {
             System.out.println("Projet non trouvé.");
         }
@@ -332,16 +408,11 @@ public class Main {
 
 
 
-    private static void displayAllProjects(List<Project> projects) {
-        System.out.println("Liste des projets :");
-        for (Project project : projects) {
-            System.out.println("- " + project.getProjectName());
-        }
-    }
 
 
 
-    private static void modifyTaskProgress(TaskManager taskManager, List<Student> student, Scanner scanner) {
+
+    private static void modifyTaskProgress(TaskManager taskManager, List<Student> student,List<Task>  tasks, Scanner scanner) {
         System.out.println("Entrez le nom de la tâche pour laquelle vous souhaitez modifier l'avancement :");
         String taskName = scanner.nextLine();
 
@@ -354,8 +425,8 @@ public class Main {
             System.out.println("Entrez le nouvel avancement de la tâche (en pourcentage) :");
             int progress = scanner.nextInt();
             scanner.nextLine(); // Consommer le caractère de nouvelle ligne
+            task.setTaskStatus(TaskStates.IN_PROGRESS);
 
-          //  task.setTaskProgress(progress); avoir
             System.out.println("Avancement de la tâche modifié avec succès.");
         } else {
             System.out.println("Tâche non trouvée ou vous n'êtes pas assigné à cette tâche.");
